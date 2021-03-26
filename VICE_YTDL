@@ -1,0 +1,52 @@
+#!/bin/bash
+##########################################################################
+##########################################################################
+##                                                                      ##
+##         _____ _   _____     _____     _   _____         _            ##
+##        |     | |_|     |_ _| __  |___| |_|   __|___ ___| |_          ##
+##        |  |  |   | | | | | | __ -| .'|   |  |  | . |_ -|   |         ##
+##        |_____|_|_|_|_|_|_  |_____|__,|_|_|_____|___|___|_|_|         ##
+##                        |___|                                         ##
+##                                                                      ##
+##..Grabs Latest Episode of Vice News: Tonight...The Day After it Airs..##
+##             You'll Need youtube-dl, ffmpeg, JQ, & Sed                ##
+##########################################################################
+##                  https://github.com/ohmybahgosh                      ##
+##########################################################################
+##########################################################################
+###       "I'm far from an expert, but this gets the job done"         ###
+##########################################################################
+
+#### SET VARIABLES: ####
+## This variable uses CURL to grab the json data, pipe it thru JQ & SED, and then saves the latest episode file as the variable ##
+NEWEPVICE=$(curl 'https://www.vicetv.com/api/v1/videos?locale=en_us&show_id=5e39a812669dce57a25b50b6&video_type=full_length&sort=episode_display_mode&per_page=12&page=1'   -H 'authority: www.vicetv.com'   -H 'pragma: no-cache'   -H 'cache-control: no-cache'   -H 'sec-ch-ua: "Google Chrome";v="89", "Chromium";v="89", ";Not A Brand";v="99"'   -H 'accept: application/json'   -H 'sec-ch-ua-mobile: ?0'   -H 'user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36'   -H 'sec-fetch-site: same-origin'   -H 'sec-fetch-mode: cors'   -H 'sec-fetch-dest: empty'   -H 'referer: https://www.vicetv.com/en_us/show/vice-news-tonight-1-507'   -H 'accept-language: en-US,en;q=0.9'   -H 'cookie:X-GeoIP-Country-Code=US;'   --compressed --silent | jq --raw-output '.[0].urls' | sed 's/"//g' | sed 's/\[//' | sed 's/\]//')
+## This variable creates the proper folder/title formatting for my sonarr setup including the full path for outting the new renamed file once downloaded ##
+MV2DIRANDTITLE=$(echo "/path/to/VICE_News_folder/Season $(date +%Y)/TEST VICE News Tonight - $(date --date=yesterday +%Y-%m-%d) - $(date --date=yesterday '+%A, %B %d, %Y') WEBDL-1080p.mp4")
+## Set variable for the date of the previous date (to make sure we're pulling new epsiode) ##
+YETERDAYDATE=$(echo $(date --date=yesterday "+%A-%B-%d-%Y") | tr [:upper:] [:lower:])
+## Set variable to pull the date via the URL, we need it matching the variable directly above ##
+DATEFROMEPURL=$(echo $NEWEPVICE | sed 's:^https.*video/\(.*\)/.*$:\1:')
+## For sending a push notification via Pushover ##
+VICENAMEPUSH="VICE News: Tonight For $(date --date=yesterday "+%A, %B %d, %Y")"
+## Set variable for the US Proxy, to bypass geo restrictions ##
+PROXY4GEOBYPASS="IP:PORT"
+
+
+## Make sure the date of the episode URL matches from the night before ##
+## Also make sure that the file hasn't already been downloaded ##
+if [[ "$YETERDAYDATE" = "$DATEFROMEPURL" && ! -f "$MV2DIRANDTITLE" ]]; then
+## Move to working dir, change to whatever DIR you want it to be ##
+	cd /path/to/working/dir/
+
+## YouTube-DL command includes --geo-verification-proxy as VICE only allows US IP addresses...ommit the flag if using US IP ##
+## If you need to bypass the GEO verification, google for a free US PROXY ##
+## The proxy is ONLY used for GEO location, not downloading so IT WILL NOT HURT DOWNLOAD SPEEDS ##
+	youtube-dl --geo-verification-proxy ${PROXY4GEOBYPASS} -f bestvideo[ext=mp4]+bestaudio ${NEWEPVICE}
+
+## This moves the new episode and gives it proper sonarr folder and episode formatting...feel free to ommit or modify ##
+	mv *mp4 "${MV2DIRANDTITLE}"
+
+## Send push notification via IFTTT & Pushover...I Commented it out by default, modify if you want to use it ##
+	#curl -X POST -H "Content-Type: application/json" -d "{\"value1\":\"$VICENAMEPUSH\"}" 'https://maker.ifttt.com/trigger/TRIGGER_NAME/with/key/UNIQUE_ID_CODE'
+
+fi
