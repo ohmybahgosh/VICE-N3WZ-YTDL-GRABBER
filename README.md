@@ -13,7 +13,7 @@
 ## Install
 
 ```sh
-cd VICE-YT-GRABBER && chmod +x VICE_YTDL && ./VICE_YTDL
+git clone https://github.com/ohmybahgosh/VICE-YT-GRABBER.git && cd VICE-YT-GRABBER && chmod +x VICE_YTDL && ./VICE_YTDL
 ```
 
 ## Usage
