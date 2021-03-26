@@ -6,7 +6,7 @@
   </a>
 </p>
 
-> Simple Bash to Grab Latest News
+> Simple Bash to Grab Latest EP of VICE N3Wz 2Night
 
 ### 🏠 [Homepage](https://github.com/ohmybahgosh/VICE-YT-GRABBER)
 
